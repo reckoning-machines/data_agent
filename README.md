@@ -26,6 +26,8 @@ usage:
 
 gunicorn --timeout 600 -w 6 'data_agent_flask_worker:app' in the same directory
 
+this call spins up 6 workers
+
 run data_agent_client_code.py
 
 <img width="551" alt="image" src="https://github.com/user-attachments/assets/f91560df-80c1-4815-9c23-4f96dd5e4c3f" />
