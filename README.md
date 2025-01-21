@@ -2,7 +2,7 @@ Multithreading financial datapull
 
 User story: As a financial analyst I want to pull multiple tickers' data so that I have a cache of data for use in subsequent preprocessing for analysis.
 
-This repo will allow for a client code app to assemble a json "jobs" list to send to gunicorn/flask, which then multithreads the data calls.  In this case I am using 6 cores.
+This repo will allow for a client code app to assemble a json "jobs" list to send to gunicorn/flask, which then *multithreads the data calls.  In this example I am using 6 cores.
 
 <img width="709" alt="image" src="https://github.com/user-attachments/assets/619db41d-2b25-4d8d-be0e-e948bba27071" />
 
