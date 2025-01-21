@@ -2,4 +2,4 @@ import requests
 
 
 def wrech_mach(p):
-    return requests.post(p["url"], data=p["data"])
+    return requests.post(p["url"])
