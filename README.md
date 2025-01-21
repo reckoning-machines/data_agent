@@ -1,4 +1,5 @@
 Multithreading financial datapull
+
 User story: As a financial analyst I want to pull multiple tickers' data so that I have a cache of data for use in subsequent preprocessing for analysis.
 
 data_pull.py contains an abstract base data class and one contrete data class; yahoo
