@@ -4,15 +4,22 @@ import data_agent_post
 import pandas as pd
 import json
 from datetime import datetime as dt
+import toml
+import os
+
 
 if __name__ == "__main__":
+    script_path = os.path.dirname(os.path.realpath(__file__))
+
+    SETTINGS = toml.load(f"{script_path}/settings.toml")
+    symbol_list = SETTINGS["symbols"]
+
     probabilities = {}
     truth = {}
     n_workers = 4
     p = Pool(n_workers)
 
     base_url = "http://localhost:8000/get_svc?symbol={}&data_agent={}"
-    symbol_list = ["JPM"]
     jobs = []
     for symbol in symbol_list:
         path = "worker_data/" + symbol + ".csv"
