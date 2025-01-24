@@ -16,6 +16,8 @@ import toml
 import os
 from datetime import datetime
 from skimpy import clean_columns
+from fredapi import Fred
+
 
 """
 globals
@@ -137,3 +139,51 @@ class YahooDataAgent(DataAgent):
 
     def save(self):
         save_file(self._data, end_point="yahoo-prices", symbol=self._symbol)
+
+
+@dataclass
+class FREDDataAgent(DataAgent):
+    """
+    class to retrieve yahoo finance data
+    """
+
+    _symbol: str
+    name: str = "FREDDataAgent"
+
+    @property
+    def symbol(self):
+        return self._symbol
+
+    @symbol.setter
+    def symbol(self, value):
+        if not isinstance(value, str):
+            raise TypeError("symbol must be a string")
+        self._symbol = value
+
+    def get_data(self, symbol):
+        from datetime import date
+
+        today = date.today()
+        today = today.strftime("%Y-%m-%d")
+
+        FRED = Fred(KEYS["fred"])
+
+        fred_list = []
+        s = pd.DataFrame(
+            FRED.get_series(
+                symbol,
+                observation_start="2018-01-01",
+            )
+        ).reset_index()
+        s.dropna(inplace=True)
+        s.columns = ["date", "value"]
+        s["series"] = symbol
+        fred_list.append(s)
+        df_fred = pd.concat(fred_list)
+
+        self._data = df_fred.dropna()
+
+        return
+
+    def save(self):
+        save_file(self._data, end_point="fred-prices", symbol=self._symbol)

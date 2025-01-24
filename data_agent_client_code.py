@@ -13,6 +13,7 @@ if __name__ == "__main__":
 
     SETTINGS = toml.load(f"{script_path}/settings.toml")
     symbol_list = SETTINGS["symbols"]
+    macro_list = SETTINGS["macros"]
 
     probabilities = {}
     truth = {}
@@ -35,6 +36,22 @@ if __name__ == "__main__":
         url = ""
         agent_type = "yahoo"
         jobs.append({"url": base_url.format(symbol, agent_type)})
+
+    for symbol in macro_list:
+        path = "worker_data/" + symbol + ".csv"
+        """
+        jobs:
+        1. data agent type
+        2. ticker list
+        """
+
+        print(symbol)
+        some_variable = ""
+        data_list = []
+        url = ""
+        agent_type = "yahoo"
+        jobs.append({"url": base_url.format(symbol, agent_type)})
+
     print(jobs)
     results = p.map(data_agent_post.wrech_mach, jobs)
     print(results)
