@@ -17,6 +17,7 @@ import os
 from datetime import datetime
 from skimpy import clean_columns
 from fredapi import Fred
+import requests
 
 
 """
@@ -25,7 +26,7 @@ globals
 script_path = os.path.dirname(os.path.realpath(__file__))
 KEYS = toml.load(f"{script_path}/keys.toml")
 RUN_TYPE = ""
-API_KEY = KEYS["fmp"]
+FMP_KEY = KEYS["fmp"]
 SETTINGS = toml.load(f"{script_path}/settings.toml")
 HEADERS = {"Content-Type": "application/json", "Accept": "application/json"}
 today = datetime.now()
@@ -50,19 +51,22 @@ helper functions
 
 
 def upload_to_s3(filename, bucket, key):
-    try:
-        S3 = session.resource("s3")
-        S3 = boto3.resource(
-            "s3",
-            region_name="us-east-2",
-            aws_access_key_id=KEYS["key"],
-            aws_secret_access_key=KEYS["secret"],
-        )
-        response = S3.Object(bucket, key).put(Body=open(filename, "rb"))
-        print(response)
-        return response
-    except Exception as error:
-        print(error)
+    # try:
+    S3 = session.resource("s3")
+    S3 = boto3.resource(
+        "s3",
+        region_name="us-east-2",
+        aws_access_key_id=KEYS["key"],
+        aws_secret_access_key=KEYS["secret"],
+    )
+    print(bucket)
+    response = S3.Object(bucket, key).put(Body=open(filename, "rb"))
+    print(response["ResponseMetadata"]["HTTPStatusCode"])
+    return response
+    #
+    # except Exception as error:
+    #    print(error)
+    return
 
 
 def save_file(
@@ -114,14 +118,13 @@ class DataAgent(ABC):
         pass
 
 
-@dataclass
-class YahooDataAgent(DataAgent):
+class PricesDataAgent(DataAgent):
     """
     class to retrieve yahoo finance data
     """
 
     _symbol: str
-    name: str = "YahooDataAgent"
+    name: str = "PricesDataAgent"
 
     @property
     def symbol(self):
@@ -134,21 +137,19 @@ class YahooDataAgent(DataAgent):
         self._symbol = value
 
     def get_data(self):
-        print("get data")
         self._data = yf.download([self._symbol], "2015-1-1")["Close"].reset_index()
 
     def save(self):
-        save_file(self._data, end_point="yahoo-prices", symbol=self._symbol)
+        save_file(self._data, end_point=f"prices-{self._symbol}", symbol=self._symbol)
 
 
-@dataclass
-class FREDDataAgent(DataAgent):
+class MacroDataAgent(DataAgent):
     """
     class to retrieve yahoo finance data
     """
 
     _symbol: str
-    name: str = "FREDDataAgent"
+    name: str = "MacroDataAgent"
 
     @property
     def symbol(self):
@@ -160,7 +161,7 @@ class FREDDataAgent(DataAgent):
             raise TypeError("symbol must be a string")
         self._symbol = value
 
-    def get_data(self, symbol):
+    def get_data(self):
         from datetime import date
 
         today = date.today()
@@ -171,13 +172,13 @@ class FREDDataAgent(DataAgent):
         fred_list = []
         s = pd.DataFrame(
             FRED.get_series(
-                symbol,
+                self._symbol,
                 observation_start="2018-01-01",
             )
         ).reset_index()
         s.dropna(inplace=True)
         s.columns = ["date", "value"]
-        s["series"] = symbol
+        s["series"] = self._symbol
         fred_list.append(s)
         df_fred = pd.concat(fred_list)
 
@@ -186,4 +187,50 @@ class FREDDataAgent(DataAgent):
         return
 
     def save(self):
-        save_file(self._data, end_point="fred-prices", symbol=self._symbol)
+        save_file(
+            self._data, end_point=f"macro-prices-{self._symbol}", symbol=self._symbol
+        )
+
+
+class IncomeStatementDataAgent(DataAgent):
+    """
+    class to retrieve fmp income statement data
+    """
+
+    _symbol: str
+    name: str = "IncomeStatementDataAgent"
+    # [income-statement]
+    # base_url_add = "fmp_symbol"
+    # return_type = "list_of_dict"
+    # url_adds = "period=quarterly"
+
+    @property
+    def symbol(self):
+        return self._symbol
+
+    @symbol.setter
+    def symbol(self, value):
+        if not isinstance(value, str):
+            raise TypeError("symbol must be a string")
+        self._symbol = value
+
+    def get_data(self):
+        FMP_URL = f"https://financialmodelingprep.com/api/v3/income-statement"
+        url = f"{FMP_URL}/{self.symbol}?apikey={FMP_KEY}"
+        r = requests.get(url, headers=HEADERS)
+        d = r.json()
+        # print(url)
+        # quit()
+        # d = d["income-statement"]["return_key"]
+        d = pd.DataFrame(d)
+        d["item"] = "income-statement"
+        self._data = d
+
+        return
+
+    def save(self):
+        save_file(
+            self._data,
+            end_point=f"income-statement-{self._symbol}",
+            symbol=self._symbol,
+        )

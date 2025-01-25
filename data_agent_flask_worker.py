@@ -19,8 +19,19 @@ def get_svc():
     data_agent = request.args.get("data_agent")
     symbol = request.args.get("symbol")
     match data_agent:
-        case "yahoo":
-            da = YahooDataAgent(symbol)
+        case "prices":
+            da = PricesDataAgent(symbol)
+            da.get_data()
+            da.save()
 
-    da.get_data()
+        case "macro":
+            da = MacroDataAgent(symbol)
+            da.get_data()
+            da.save()
+
+        case "income-statement":
+            da = IncomeStatementDataAgent(symbol)
+            da.get_data()
+            da.save()
+
     return "Success"

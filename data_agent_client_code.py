@@ -31,10 +31,9 @@ if __name__ == "__main__":
         """
 
         print(symbol)
-        some_variable = ""
-        data_list = []
-        url = ""
-        agent_type = "yahoo"
+        agent_type = "prices"
+        jobs.append({"url": base_url.format(symbol, agent_type)})
+        agent_type = "income-statement"
         jobs.append({"url": base_url.format(symbol, agent_type)})
 
     for symbol in macro_list:
@@ -49,7 +48,7 @@ if __name__ == "__main__":
         some_variable = ""
         data_list = []
         url = ""
-        agent_type = "yahoo"
+        agent_type = "macro"
         jobs.append({"url": base_url.format(symbol, agent_type)})
 
     print(jobs)
